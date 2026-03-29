@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bé Trải Nghiệm Pro - Phần Mềm Mầm Non</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+        
+        :root {
+            --primary: #ff6b6b;
+            --secondary: #4ecdc4;
+            --accent: #feca57;
+            --purple: #a29bfe;
+            --bg: #f0f9ff;
+            --dark: #2d3436;
+        }
+
+        * { box-sizing: border-box; font-family: 'Nunito', sans-serif; }
+        body { background: var(--bg); margin: 0; display: flex; justify-content: center; overflow-x: hidden; }
+
+        #app-container {
+            width: 100%; max-width: 500px; background: white; min-height: 100vh;
+            box-shadow: 0 0 30px rgba(0,0,0,0.1); position: relative; padding-bottom: 80px;
+        }
+
+        /* Header & Stats */
+        .header {
+            background: linear-gradient(135deg, var(--primary), #ff8787);
+            color: white; padding: 30px 20px; text-align: center;
+            border-bottom-left-radius: 40px; border-bottom-right-radius: 40px;
+        }
+
+        .stats-bar {
+            display: flex; justify-content: space-around; padding: 15px;
+            background: #fff; margin: -20px 20px 0; border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .stat-item { text-align: center; font-weight: bold; color: var(--dark); }
+        .stat-item span { display: block; font-size: 20px; color: var(--primary); }
+
+        /* Menu lọc */
+        .category-scroll {
+            display: flex; overflow-x: auto; padding: 20px; gap: 10px;
+            scrollbar-width: none;
+        }
+        .category-scroll::-webkit-scrollbar { display: none; }
+        .cat-btn {
+            padding: 8px 18px; border-radius: 20px; border: 2px solid #eee;
+            background: white; white-space: nowrap; cursor: pointer; font-weight: bold;
+        }
+        .cat-btn.active { background: var(--secondary); color: white; border-color: var(--secondary); }
+
+        /* Danh sách bài học */
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
+        .lesson-card {
+            background: white; border: 3px solid #f0f0f0; border-radius: 25px;
+            padding: 15px; text-align: center; cursor: pointer; transition: 0.3s;
+            position: relative;
+        }
+        .lesson-card:hover { transform: translateY(-5px); border-color: var(--secondary); }
+        .lesson-card .icon { font-size: 50px; margin-bottom: 10px; }
+        .lesson-card h3 { margin: 0; font-size: 16px; color: #444; }
+        .stars-display { color: var(--accent); font-size: 14px; margin-top: 5px; }
+        .badge-done { position: absolute; top: 5px; right: 5px; font-size: 18px; }
+
+        /* Quiz Screen */
+        #quiz-screen { display: none; padding: 20px; text-align: center; animation: fadeIn 0.5s; }
+        .q-card {
+            background: #fff9e6; padding: 25px; border-radius: 30px;
+            border: 4px dashed var(--accent); margin-bottom: 20px; position: relative;
+        }
+        .q-image { font-size: 70px; margin-bottom: 10px; display: block; }
+        
+        .opt-btn {
+            background: white; border: 3px solid #eee; border-radius: 20px;
+            padding: 15px 20px; font-size: 18px; font-weight: bold; margin-bottom: 12px;
+            cursor: pointer; transition: 0.2s; width: 100%; display: flex; align-items: center;
+            gap: 15px;
+        }
+        .opt-btn:hover { border-color: var(--primary); background: #fffafa; }
+        .opt-btn .num { width: 30px; height: 30px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        /* Kết quả bài học */
+        #result-screen { display: none; text-align: center; padding: 40px 20px; animation: popIn 0.5s; }
+        .trophy { font-size: 100px; }
+        .result-stars { font-size: 40px; color: var(--accent); margin: 20px 0; }
+
+        /* Buttons */
+        .btn-main {
+            background: var(--primary); color: white; border: none; padding: 15px 30px;
+            border-radius: 50px; font-size: 18px; font-weight: 900; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        .btn-back { position: absolute; top: 20px; left: 20px; background: none; border: none; font-size: 30px; cursor: pointer; z-index: 10; }
+
+        /* Anim */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0.5); } 100% { transform: scale(1); } }
+        .correct { animation: bounce 0.5s; color: #2ecc71; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        /* Pháo hoa */
+        .confetti { position: fixed; width: 10px; height: 10px; background: red; top: -10px; z-index: 999; }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <!-- MÀN HÌNH CHÍNH -->
+    <div id="home-screen">
+        <div class="header">
+            <h1 style="margin:0; font-size: 28px;">🌟 BÉ TRẢI NGHIỆM 🌟</h1>
+            <p>Bé muốn khám phá gì hôm nay?</p>
+        </div>
+        
+        <div class="stats-bar">
+            <div class="stat-item"><span id="total-stars">0</span> Tổng Sao</div>
+            <div class="stat-item"><span id="completed-count">0</span> Bài Xong</div>
+        </div>
+
+        <div class="category-scroll">
+            <button class="cat-btn active" onclick="filterCat('all', this)">Tất cả</button>
+            <button class="cat-btn" onclick="filterCat('cooking', this)">🍳 Nấu ăn</button>
+            <button class="cat-btn" onclick="filterCat('life', this)">🏠 Kỹ năng</button>
+            <button class="cat-btn" onclick="filterCat('science', this)">🔬 Khoa học</button>
+        </div>
+
+        <div class="menu-grid" id="menu-list"></div>
+    </div>
+
+    <!-- MÀN HÌNH CÂU HỎI -->
+    <div id="quiz-screen">
+        <button class="btn-back" onclick="goHome()">⬅️</button>
+        <div id="progress-text" style="font-weight: bold; margin-bottom: 10px; color: #888;">Câu 1/2</div>
+        <div class="q-card">
+            <span class="q-image" id="q-img"></span>
+            <h2 id="question-text" style="margin:0; color: var(--dark);"></h2>
+        </div>
+        <div id="options-container"></div>
+        <div id="feedback" style="height: 40px; font-weight: bold; font-size: 22px; margin-top: 15px;"></div>
+    </div>
+
+    <!-- MÀN HÌNH KẾT QUẢ -->
+    <div id="result-screen">
+        <div class="trophy">🏆</div>
+        <h2 id="result-title">XUẤT SẮC!</h2>
+        <div class="result-stars" id="result-stars"></div>
+        <p id="result-msg" style="font-size: 18px; color: #666;"></p>
+        <button class="btn-main" onclick="goHome()">TIẾP TỤC HỌC</button>
+    </div>
+</div>
+
+<script>
+    // DỮ LIỆU BÀI HỌC
+    const lessons = [
+        { id: 1, cat: 'cooking', title: "Làm Bánh Trôi", icon: "🍡", q_img: "🥣", questions: [{ q: "Bột nếp có màu gì bé nhỉ?", opts: ["Màu trắng tinh", "Màu đen thui"], c: 0 }, { q: "Bánh chín sẽ như thế nào?", opts: ["Chìm xuống dưới", "Nổi lên mặt nước"], c: 1 }] },
+        { id: 2, cat: 'life', title: "Tập Trồng Cây", icon: "🌱", q_img: "☀️", questions: [{ q: "Cây cần gì để lớn?", opts: ["Nước và ánh sáng", "Kẹo và bánh"], c: 0 }, { q: "Gieo hạt vào đâu?", opts: ["Vào đất", "Vào cặp sách"], c: 0 }] },
+        { id: 3, cat: 'cooking', title: "Vắt Nước Cam", icon: "🍊", q_img: "🥤", questions: [{ q: "Quả cam có vị gì?", opts: ["Ngọt chua mát", "Cay sè"], c: 0 }, { q: "Dùng gì vắt cam?", opts: ["Thìa", "Máy vắt cam"], c: 1 }] },
+        { id: 4, cat: 'science', title: "Thí Nghiệm Màu", icon: "🎨", q_img: "🌈", questions: [{ q: "Đỏ + Vàng ra màu gì?", opts: ["Màu Cam", "Màu Tím"], c: 0 }, { q: "Xanh + Vàng ra màu?", opts: ["Màu Đen", "Xanh Lá"], c: 1 }] },
+        { id: 5, cat: 'life', title: "Rửa Tay Sạch", icon: "🧼", q_img: "🖐️", questions: [{ q: "Dùng gì diệt vi khuẩn?", opts: ["Xà phòng", "Chỉ nước lã"], c: 0 }] },
+        { id: 6, cat: 'life', title: "Gấp Quần Áo", icon: "👕", q_img: "🧺", questions: [{ q: "Gấp xong để đâu?", opts: ["Tủ gọn gàng", "Sàn nhà"], c: 0 }] }
+    ];
+
+    let userProgress = JSON.parse(localStorage.getItem('mamnon_pro_v1')) || {};
+    let currentL = null;
+    let currentQIdx = 0;
+    let score = 0;
+
+    // ÂM THANH (Web Audio API)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(freq, type, duration) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function initMenu() {
+        renderMenu('all');
+        updateStats();
+    }
+
+    function updateStats() {
+        let totalStars = 0;
+        let completed = 0;
+        Object.values(userProgress).forEach(l => {
+            totalStars += l.stars;
+            if (l.stars > 0) completed++;
+        });
+        document.getElementById('total-stars').innerText = totalStars;
+        document.getElementById('completed-count').innerText = completed;
+    }
+
+    function renderMenu(cat) {
+        const list = document.getElementById('menu-list');
+        list.innerHTML = '';
+        const filtered = cat === 'all' ? lessons : lessons.filter(l => l.cat === cat);
+        
+        filtered.forEach(l => {
+            const progress = userProgress[l.id] || { stars: 0 };
+            const card = document.createElement('div');
+            card.className = 'lesson-card';
+            card.innerHTML = `
+                ${progress.stars > 0 ? '<span class="badge-done">✅</span>' : ''}
+                <div class="icon">${l.icon}</div>
+                <h3>${l.title}</h3>
+                <div class="stars-display">${'⭐'.repeat(progress.stars)}</div>
+            `;
+            card.onclick = () => startLesson(l);
+            list.appendChild(card);
+        });
+    }
+
+    function filterCat(cat, btn) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderMenu(cat);
+        playSound(440, 'sine', 0.1);
+    }
+
+    function startLesson(l) {
+        currentL = l;
+        currentQIdx = 0;
+        score = 0;
+        document.getElementById('home-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        showQ();
+    }
+
+    function showQ() {
+        const q = currentL.questions[currentQIdx];
+        document.getElementById('progress-text').innerText = `Câu ${currentQIdx + 1}/${currentL.questions.length}`;
+        document.getElementById('question-text').innerText = q.q;
+        document.getElementById('q-img').innerText = currentL.q_img;
+        document.getElementById('feedback').innerText = "";
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = "";
+        q.opts.forEach((o, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerHTML = `<span class="num">${i+1}</span> ${o}`;
+            btn.onclick = () => checkAns(i);
+            container.appendChild(btn);
+        });
+        speak(q.q);
+    }
+
+    function checkAns(i) {
+        const q = currentL.questions[currentQIdx];
+        const fb = document.getElementById('feedback');
+        if(i === q.c) {
+            score++;
+            fb.innerText = "ĐÚNG RỒI! GIỎI QUÁ! ⭐";
+            fb.className = "correct";
+            playSound(880, 'sine', 0.2);
+            speak("Đúng rồi, bé giỏi quá");
+        } else {
+            fb.innerText = "BÉ THỬ LẠI XEM... 💡";
+            fb.className = "wrong";
+            playSound(200, 'sawtooth', 0.3);
+            speak("Bé chọn lại nhé");
+        }
+
+        setTimeout(() => {
+            currentQIdx++;
+            if(currentQIdx < currentL.questions.length) showQ();
+            else showResult();
+        }, 1500);
+    }
+
+    function showResult() {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        
+        const totalQ = currentL.questions.length;
+        const starCount = Math.ceil((score/totalQ) * 3);
+        
+        // Lưu tiến độ
+        if(!userProgress[currentL.id] || userProgress[currentL.id].stars < starCount) {
+            userProgress[currentL.id] = { stars: starCount };
+            localStorage.setItem('mamnon_pro_v1', JSON.stringify(userProgress));
+        }
+
+        document.getElementById('result-stars').innerText = '⭐'.repeat(starCount);
+        document.getElementById('result-msg').innerText = `Bé đã trả lời đúng ${score}/${totalQ} câu hỏi!`;
+        
+        if(starCount === 3) {
+            spawnConfetti();
+            playSound(523.25, 'sine', 0.2);
+            setTimeout(() => playSound(659.25, 'sine', 0.2), 150);
+            setTimeout(() => playSound(783.99, 'sine', 0.4), 300);
+            speak("Chúc mừng bé đã hoàn thành xuất sắc");
+        }
+    }
+
+    function goHome() {
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('home-screen').style.display = 'block';
+        initMenu();
+    }
+
+    function speak(txt) {
+        const u = new SpeechSynthesisUtterance(txt);
+        u.lang = 'vi-VN';
+        u.rate = 0.9;
+        window.speechSynthesis.speak(u);
+    }
+
+    function spawnConfetti() {
+        for(let i=0; i<50; i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            c.style.left = Math.random() * 100 + 'vw';
+            c.style.backgroundColor = ['#ff6b6b','#4ecdc4','#feca57','#a29bfe'][Math.floor(Math.random()*4)];
+            c.style.transform = `rotate(${Math.random()*360}deg)`;
+            document.body.appendChild(c);
+            
+            const animation = c.animate([
+                { top: '-10px', opacity: 1 },
+                { top: '100vh', opacity: 0, transform: `rotate(${Math.random()*720}deg)` }
+            ], { duration: 2000 + Math.random()*3000, easing: 'cubic-bezier(0,1,1,1)' });
+            
+            animation.onfinish = () => c.remove();
+        }
+    }
+
+    initMenu();
+</script>
+</body>
+</html>
